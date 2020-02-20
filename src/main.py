@@ -11,7 +11,8 @@ from utils import APIException, generate_sitemap
 from models import db
 from models import User
 from models import Todo
-# import jwt
+from functools import wraps
+import jwt
 import datetime
 import uuid
 
@@ -27,6 +28,26 @@ MIGRATE = Migrate(app, db)
 db.init_app(app)
 CORS(app)
 
+def token_required(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        token = None
+
+        if "x-access-token" in request.headers:
+            token = request.headers["x-access-token"]
+
+        if not token:
+            return jsonify({'message' : "Token is missing!"}), 401
+
+        try:
+            data = jwt.decode(token, 'secret')
+            current_user = User.query.filter_by(public_id=data['public_id']).first()
+        except:
+            return jsonify({'message': "Token is invalid"}), 401
+        return f(current_user, *args, **kwargs)
+    return decorated
+
+
 # Handle/serialize errors like a JSON object
 @app.errorhandler(APIException)
 def handle_invalid_usage(error):
@@ -37,7 +58,12 @@ def get_sitemap():
     return generate_sitemap(app)
 
 @app.route("/user", methods=["GET"])
-def get_all_users():
+@token_required
+def get_all_users(current_user):
+
+    if not current_user.admin:
+        return jsonify({"message" : "Cannot perform that function!"})
+
     users = User.query.all()
     output = []
     for user in users:
@@ -51,7 +77,8 @@ def get_all_users():
     return jsonify({"users" : output})
 
 @app.route("/user/<public_id>", methods=["GET"])
-def get_one_user(public_id):
+@token_required
+def get_one_user(current_user, public_id):
 
     user = User.query.filter_by(public_id=public_id).first()
 
@@ -67,7 +94,8 @@ def get_one_user(public_id):
     return jsonify({"user" : user_data})
 
 @app.route("/user", methods=["POST"])
-def create_user():
+@token_required
+def create_user(current_user):
     data = request.get_json()
     hashed_password = generate_password_hash(data["password"], method="sha256")
     new_user = User(public_id=str(uuid.uuid4()), name=data["name"], password=hashed_password, admin=False)
@@ -76,7 +104,8 @@ def create_user():
     return jsonify({"message":"New User Created!"})
 
 @app.route("/user/<public_id>", methods=["PUT"])
-def promote_user(public_id):
+@token_required
+def promote_user(current_user, public_id):
     user = User.query.filter_by(public_id=public_id).first()
     if not user:
         return jsonify({"message" : "No user found!"})
@@ -85,7 +114,8 @@ def promote_user(public_id):
     return jsonify({"message" : "The User has been promoted to Admin!"})    
 
 @app.route("/user/<public_id>", methods=["DELETE"])
-def delete_user(public_id):
+@token_required
+def delete_user(current_user, public_id):
     user = User.query.filter_by(public_id=public_id).first()
     if not user:
         return jsonify({"message" : "No user found!"})
@@ -96,8 +126,8 @@ def delete_user(public_id):
     return jsonify({"message" : "The user has been Deleted forever!"})
 @app.route("/login")
 def login():
+    
     auth = request.authorization
-
     if not auth or not auth.username or not auth.password:  
         return make_response("Could not verify", 401, {"WWW-Authenticate" : "Basic realm='Login required!'" })
 
@@ -107,7 +137,7 @@ def login():
         return make_response("Could not verify", 401, {"WWW-Authenticate" : "Basic realm='Login required!'" })
         
     if check_password_hash(user.password, auth.password):
-        token = jwt.encode({"public_id" : user.public_id, "exp" : datetime.datetime.utc +datetime.timedelta(minutes=30)}, app.config["JWT_SECRET_KEY"])
+        token = jwt.encode({"public_id" : user.public_id, "exp" : datetime.datetime.utcnow() + datetime.timedelta(minutes=5)},  'secret')
         return jsonify({"token": token.decode("UTF-8")})
 
     return make_response("Could not verify", 401, {"WWW-Authenticate" : "Basic realm='Login required!'" })
