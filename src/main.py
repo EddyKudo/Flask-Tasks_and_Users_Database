@@ -2,12 +2,21 @@
 This module takes care of starting the API Server, Loading the DB and Adding the endpoints
 """
 import os
-from flask import Flask, request, jsonify, url_for
+
+from flask import Flask, request, jsonify, url_for, make_response
 from flask_migrate import Migrate
 from flask_swagger import swagger
 from flask_cors import CORS
 from utils import APIException, generate_sitemap
 from models import db
+from models import User
+from models import Todo
+# import jwt
+import datetime
+import uuid
+
+from werkzeug.security import generate_password_hash, check_password_hash
+
 #from models import Person
 
 app = Flask(__name__)
@@ -23,19 +32,99 @@ CORS(app)
 def handle_invalid_usage(error):
     return jsonify(error.to_dict()), error.status_code
 
-# generate sitemap with all your endpoints
-@app.route('/')
-def sitemap():
+@app.route("/", methods=["GET"])
+def get_sitemap():
     return generate_sitemap(app)
 
-@app.route('/hello', methods=['POST', 'GET'])
-def handle_hello():
+@app.route("/user", methods=["GET"])
+def get_all_users():
+    users = User.query.all()
+    output = []
+    for user in users:
+        user_data = {}
+        user_data["public_id"] = user.public_id
+        user_data["name"] = user.name
+        user_data["password"] = user.password
+        user_data["admin"] = user.admin
+        output.append(user_data)
 
-    response_body = {
-        "hello": "world"
-    }
+    return jsonify({"users" : output})
 
-    return jsonify(response_body), 200
+@app.route("/user/<public_id>", methods=["GET"])
+def get_one_user(public_id):
+
+    user = User.query.filter_by(public_id=public_id).first()
+
+    if not user:
+        return jsonify({"message" : "No user found!"})
+    
+    user_data = {}
+    user_data["public_id"] = user.public_id
+    user_data["name"] = user.name
+    user_data["password"] = user.password
+    user_data["admin"] = user.admin
+
+    return jsonify({"user" : user_data})
+
+@app.route("/user", methods=["POST"])
+def create_user():
+    data = request.get_json()
+    hashed_password = generate_password_hash(data["password"], method="sha256")
+    new_user = User(public_id=str(uuid.uuid4()), name=data["name"], password=hashed_password, admin=False)
+    db.session.add(new_user)
+    db.session.commit()
+    return jsonify({"message":"New User Created!"})
+
+@app.route("/user/<public_id>", methods=["PUT"])
+def promote_user(public_id):
+    user = User.query.filter_by(public_id=public_id).first()
+    if not user:
+        return jsonify({"message" : "No user found!"})
+    user.admin = True
+    db.session.commit()
+    return jsonify({"message" : "The User has been promoted to Admin!"})    
+
+@app.route("/user/<public_id>", methods=["DELETE"])
+def delete_user(public_id):
+    user = User.query.filter_by(public_id=public_id).first()
+    if not user:
+        return jsonify({"message" : "No user found!"})
+    
+    db.session.delete(user)
+    db.session.commit()
+
+    return jsonify({"message" : "The user has been Deleted forever!"})
+@app.route("/login")
+def login():
+    auth = request.authorization
+
+    if not auth or not auth.username or not auth.password:  
+        return make_response("Could not verify", 401, {"WWW-Authenticate" : "Basic realm='Login required!'" })
+
+    user = User.query.filter_by(name=auth.username).first()
+
+    if not user:
+        return make_response("Could not verify", 401, {"WWW-Authenticate" : "Basic realm='Login required!'" })
+        
+    if check_password_hash(user.password, auth.password):
+        token = jwt.encode({"public_id" : user.public_id, "exp" : datetime.datetime.utc +datetime.timedelta(minutes=30)}, app.config["JWT_SECRET_KEY"])
+        return jsonify({"token": token.decode("UTF-8")})
+
+    return make_response("Could not verify", 401, {"WWW-Authenticate" : "Basic realm='Login required!'" })
+
+# # generate sitemap with all your endpoints
+# @app.route('/')
+# def sitemap():
+#     return generate_sitemap(app)
+
+# @app.route('/hello', methods=['POST', 'GET'])
+# def handle_hello():
+
+#     response_body = {
+#         "hello": "world"
+#     }
+
+#     return jsonify(response_body), 200
 
 # this only runs if `$ python src/main.py` is executed
 if __name__ == '__main__':
