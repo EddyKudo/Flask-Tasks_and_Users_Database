@@ -27,8 +27,6 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 MIGRATE = Migrate(app, db)
 db.init_app(app)
 CORS(app)
-
-
 def token_required(f):
     @wraps(f)
     def decorated(*args, **kwargs):
