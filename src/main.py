@@ -46,7 +46,6 @@ def token_required(f):
         return f(current_user, *args, **kwargs)
     return decorated
 
-
 # Handle/serialize errors like a JSON object
 @app.errorhandler(APIException)
 def handle_invalid_usage(error):
