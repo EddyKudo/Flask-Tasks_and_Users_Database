@@ -80,6 +80,9 @@ def get_all_users(current_user):
 @token_required
 def get_one_user(current_user, public_id):
 
+    if not current_user.admin:
+        return jsonify({"message" : "Cannot perform that function!"})
+
     user = User.query.filter_by(public_id=public_id).first()
 
     if not user:
@@ -96,6 +99,10 @@ def get_one_user(current_user, public_id):
 @app.route("/user", methods=["POST"])
 @token_required
 def create_user(current_user):
+
+    if not current_user.admin:
+        return jsonify({"message" : "Cannot perform that function!"})
+
     data = request.get_json()
     hashed_password = generate_password_hash(data["password"], method="sha256")
     new_user = User(public_id=str(uuid.uuid4()), name=data["name"], password=hashed_password, admin=False)
@@ -106,6 +113,10 @@ def create_user(current_user):
 @app.route("/user/<public_id>", methods=["PUT"])
 @token_required
 def promote_user(current_user, public_id):
+
+    if not current_user.admin:
+        return jsonify({"message" : "Cannot perform that function!"})
+
     user = User.query.filter_by(public_id=public_id).first()
     if not user:
         return jsonify({"message" : "No user found!"})
@@ -116,6 +127,10 @@ def promote_user(current_user, public_id):
 @app.route("/user/<public_id>", methods=["DELETE"])
 @token_required
 def delete_user(current_user, public_id):
+
+    if not current_user.admin:
+        return jsonify({"message" : "Cannot perform that function!"})
+
     user = User.query.filter_by(public_id=public_id).first()
     if not user:
         return jsonify({"message" : "No user found!"})
@@ -137,10 +152,78 @@ def login():
         return make_response("Could not verify", 401, {"WWW-Authenticate" : "Basic realm='Login required!'" })
         
     if check_password_hash(user.password, auth.password):
-        token = jwt.encode({"public_id" : user.public_id, "exp" : datetime.datetime.utcnow() + datetime.timedelta(minutes=5)},  'secret')
+        token = jwt.encode({"public_id" : user.public_id, "exp" : datetime.datetime.utcnow() + datetime.timedelta(minutes=15)},  'secret')
         return jsonify({"token": token.decode("UTF-8")})
 
     return make_response("Could not verify", 401, {"WWW-Authenticate" : "Basic realm='Login required!'" })
+
+@app.route("/todo", methods=["GET"])
+@token_required
+def get_all_todos(current_user):
+    todos = Todo.query.filter_by(user_id=current_user.id).all()
+    output = []
+
+    for todo in todos:
+        todo_data = {}
+        todo_data["id"] = todo.id
+        todo_data["text"] = todo.text
+        todo_data["complete"] = todo.complete
+        output.append(todo_data)
+    return jsonify({"todos": output})
+
+@app.route("/todo/<todo_id>", methods=["GET"])
+@token_required
+def get_one_todo(current_user, todo_id):
+    todo = Todo.query.filter_by(id=todo_id, user_id=current_user.id).first()
+
+    if not todo:
+        return jsonify({"message" : "No such Todo found"})
+    
+    todo_data = {}
+    todo_data["id"] = todo.id
+    todo_data["text"] = todo.text
+    todo_data["complete"] = todo.complete
+
+    return jsonify(todo_data)
+
+@app.route("/todo", methods=["POST"])
+@token_required
+def create_todo(current_user):
+    data = request.get_json()
+    
+    new_todo = Todo(text=data["text"], complete=False, user_id=current_user.id)
+    db.session.add(new_todo)
+    db.session.commit()
+
+    return jsonify({"message" : "Todo created!"})
+
+@app.route("/todo/<todo_id>", methods=["PUT"])
+@token_required
+def complete_todo(current_user, todo_id):
+    todo = Todo.query.filter_by(id=todo_id, user_id=current_user.id).first()
+
+    if not todo:
+        return jsonify({"message" : "No such Todo found"})
+
+    todo.complete = True
+    db.session.commit()
+
+    return jsonify({"message" : "Todo Marked completed =) Well done!"})
+
+@app.route("/todo/<todo_id>", methods=["DELETE"])
+@token_required
+def delete_todo(current_user, todo_id):
+    todo = Todo.query.filter_by(id=todo_id, user_id=current_user.id).first()
+
+    if not todo:
+        return jsonify({"message" : "No such Todo found"})
+
+    db.session.delete(todo)
+    db.session.commit()
+
+    return jsonify ({"message" : "Successfully deleted the Todo item! Great!"})
+
+
 
 # # generate sitemap with all your endpoints
 # @app.route('/')
