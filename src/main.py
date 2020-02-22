@@ -26,11 +26,6 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 MIGRATE = Migrate(app, db)
 db.init_app(app)
 
-hashed_password = generate_password_hash("123456", method="sha256")
-new_user = User(public_id=str(uuid.uuid4()), name="eduardo", password=hashed_password, admin=True)
-db.session.add(new_user)
-db.session.commit()
-
 CORS(app)
 def token_required(f):
     @wraps(f)
