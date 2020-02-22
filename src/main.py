@@ -26,11 +26,6 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 MIGRATE = Migrate(app, db)
 db.init_app(app)
 
-hashed_password = generate_password_hash("123456", method="sha256")
-new_user = User(public_id=str(uuid.uuid4()), name="eduardo", password=hashed_password, admin=True)
-db.session.add(new_user)
-db.session.commit()
-
 CORS(app)
 def token_required(f):
     @wraps(f)
@@ -100,13 +95,13 @@ def get_one_user(current_user, public_id):
     return jsonify({"user" : user_data})
 
 @app.route("/user", methods=["POST"])
+@token_required
 def create_user():
     data = request.get_json()
     hashed_password = generate_password_hash(data["password"], method="sha256")
     new_user = User(public_id=str(uuid.uuid4()), name=data["name"], password=hashed_password, admin=True)
     db.session.add(new_user)
     db.session.commit()
-    # return jsonify({"message": data})
     return jsonify({"message":"New User Created!"})
 
 @app.route("/user/<public_id>", methods=["PUT"])
