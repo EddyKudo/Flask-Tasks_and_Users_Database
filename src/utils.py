@@ -33,5 +33,5 @@ def generate_sitemap(app):
     return """
         <div style="text-align: center;">
         <img src='https://cdn.iconscout.com/icon/free/png-256/avatar-380-456332.png' />
-        <h3>To log in USE Joao/Password123</h3>
+        <h3>To log in USE Lucas/Pass123</h3>
         Api home-page --- specify  real endpoint path like: <ul style="text-align: left;">"""+links_html+"</ul></div>"

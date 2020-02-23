@@ -5,10 +5,10 @@ db = SQLAlchemy()
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     public_id = db.Column(db.String(50),unique=True)
-    name = db.Column(db.String(50))
-    last_name = db.Column(db.String(50))
-    password = db.Column(db.String(24))
-    email = db.Column(db.String(50))
+    name = db.Column(db.String(50), nullable=False)
+    last = db.Column(db.String(50), nullable=False)
+    password = db.Column(db.String(24), nullable=False)
+    email = db.Column(db.String(50),unique=True, nullable=False)
     admin = db.Column(db.Boolean)
 
 class Todo(db.Model):
