@@ -15,7 +15,6 @@ from functools import wraps
 import jwt
 import datetime
 import uuid
-
 from werkzeug.security import generate_password_hash, check_password_hash
 #from models import Person
 
