@@ -69,7 +69,7 @@ def get_all_users(current_user):
         user_data["public_id"] = user.public_id
         user_data["name"] = user.name
         user_data["last_name"] = user.last
-        user_data["email"] = user.email
+        user_data["email_adr"] = user.email_adr
         user_data["password"] = user.password
         user_data["admin"] = user.admin
         output.append(user_data)
@@ -92,7 +92,7 @@ def get_one_user(current_user, public_id):
     user_data["public_id"] = user.public_id
     user_data["name"] = user.name
     user_data["last_name"] = user.last
-    user_data["email"] = user.email
+    user_data["email_adr"] = user.email_adr
     user_data["password"] = user.password
     user_data["admin"] = user.admin
 
@@ -102,7 +102,7 @@ def get_one_user(current_user, public_id):
 def create_user():
     data = request.get_json()
     hashed_password = generate_password_hash(data["password"], method="sha256")
-    new_user = User(public_id=str(uuid.uuid4()), name=data["name"], last=data["last"], password=hashed_password, email=data["email"], admin=True)
+    new_user = User(public_id=str(uuid.uuid4()), name=data["name"], last=data["last"], password=hashed_password, email_adr=data["email_adr"], admin=True)
     db.session.add(new_user)
     db.session.commit()
     return jsonify({"message":"New User Created!"})
