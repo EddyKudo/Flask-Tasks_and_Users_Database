@@ -2,6 +2,7 @@ from flask_sqlalchemy import SQLAlchemy
 
 db = SQLAlchemy()
 
+
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     public_id = db.Column(db.String(50),unique=True)
@@ -13,7 +14,7 @@ class User(db.Model):
 
 class Todo(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    text = db.Column(db.String(50))
+    text = db.Column(db.String(50), nullable=False)
     complete = db.Column(db.Boolean)
     user_id = db.Column(db.Integer)
 

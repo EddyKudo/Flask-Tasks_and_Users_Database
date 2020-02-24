@@ -29,7 +29,7 @@ def upgrade():
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('public_id', sa.String(length=50), nullable=True),
     sa.Column('name', sa.String(length=50), nullable=True),
-    sa.Column('password', sa.String(length=80), nullable=True),
+    sa.Column('password', sa.String(length=80), nullable=True), #  password and emial added to fix alembic issue on heroku
     sa.Column('email', sa.String(length=50)),
     sa.Column('last', sa.String(length=50)),
     sa.Column('admin', sa.Boolean(), nullable=True),
