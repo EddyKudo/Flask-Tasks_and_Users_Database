@@ -31,6 +31,7 @@ def upgrade():
     sa.Column('name', sa.String(length=50), nullable=True),
     sa.Column('password', sa.String(length=80), nullable=True),
     sa.Column('email', sa.String(length=50)),
+    sa.Column('last', sa.String(length=50)),
     sa.Column('admin', sa.Boolean(), nullable=True),
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('public_id')
