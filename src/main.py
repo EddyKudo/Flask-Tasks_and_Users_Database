@@ -102,7 +102,7 @@ def get_one_user(current_user, public_id):
 def create_user():
     data = request.get_json()
     hashed_password = generate_password_hash(data["password"], method="sha256")
-    new_user = User(public_id=str(uuid.uuid4()), name=data["name"], last=data["last"], password=hashed_password, email=data["email"], admin=False)
+    new_user = User(public_id=str(uuid.uuid4()), name=data["name"], last=data["last"], password=hashed_password, email=data["email"], admin=True)
     db.session.add(new_user)
     db.session.commit()
     return jsonify({"message":"New User Created!"})
