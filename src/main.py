@@ -15,6 +15,26 @@ from functools import wraps
 import jwt
 import datetime
 import uuid
+# Download the helper library from https://www.twilio.com/docs/python/install
+from twilio.rest import Client
+
+
+# Your Account Sid and Auth Token from twilio.com/console
+# DANGER! This is insecure. See http://twil.io/secure
+account_sid = os.environ["TWILIO_ACCOUNT_SID"]
+auth_token = os.environ["AUTH_TOKEN"]
+client = Client(account_sid, auth_token)
+
+
+# message = client.messages \
+#     .create(
+#             body="Join Earth's mightiest heroes. Like Kevin Bacon.",
+#             from_='+16264273568',
+#             to='+15618882946'
+#         )
+
+# print(message.sid)
+
 
 from werkzeug.security import generate_password_hash, check_password_hash
 #from models import Person
