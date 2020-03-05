@@ -7,7 +7,8 @@ class User(db.Model):
     name = db.Column(db.String(50), nullable=False)
     last = db.Column(db.String(50), nullable=False)
     password = db.Column(db.String(24), nullable=False)
-    email = db.Column(db.String(50), unique=True)
+    email = db.Column(db.String(50))
+    phone = db.Column(db.String(15))
     admin = db.Column(db.Boolean)
 
 class Todo(db.Model):
