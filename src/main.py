@@ -7,7 +7,7 @@ from flask import Flask, request, jsonify, url_for, make_response
 from flask_migrate import Migrate
 from flask_swagger import swagger
 from flask_cors import CORS
-from utils import APIException, generate_sitemap
+from utils import APIException, generate_sitemap, send_sms
 from models import db
 from models import User
 from models import Todo
@@ -15,27 +15,6 @@ from functools import wraps
 import jwt
 import datetime
 import uuid
-# Download the helper library from https://www.twilio.com/docs/python/install
-from twilio.rest import Client
-
-
-# Your Account Sid and Auth Token from twilio.com/console
-# DANGER! This is insecure. See http://twil.io/secure
-account_sid = os.environ["TWILIO_ACCOUNT_SID"]
-auth_token = os.environ["AUTH_TOKEN"]
-client = Client(account_sid, auth_token)
-
-
-# message = client.messages \
-#     .create(
-#             body="Join Earth's mightiest heroes. Like Kevin Bacon.",
-#             from_='+16264273568',
-#             to='+15618882946'
-#         )
-
-# print(message.sid)
-
-
 from werkzeug.security import generate_password_hash, check_password_hash
 #from models import Person
 
@@ -132,6 +111,9 @@ def create_user():
     new_user = User(public_id=str(uuid.uuid4()), name=data["firstName"], last=data["lastName"], password=hashed_password, email=data["email"], phone=data["phone"], admin=False)
     db.session.add(new_user)
     db.session.commit()
+
+    send_sms("Welcome! " + data["firstName"],data["phone"])
+
     return jsonify({"message":"New User Created!"})
 
 @app.route("/user/<public_id>", methods=["PUT"])

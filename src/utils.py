@@ -1,5 +1,6 @@
 from flask import jsonify, url_for
-
+from twilio.rest import Client
+import os
 class APIException(Exception):
     status_code = 400
 
@@ -35,3 +36,20 @@ def generate_sitemap(app):
         <img src='https://cdn.iconscout.com/icon/free/png-256/avatar-380-456332.png' />
         <h3>To log in USE Lucas/Pass123</h3>
         Api home-page --- specify  real endpoint path like: <ul style="text-align: left;">"""+links_html+"</ul></div>"
+
+
+def send_sms(message,phone):
+    account_sid = os.environ["TWILIO_ACCOUNT_SID"]
+    auth_token = os.environ["AUTH_TOKEN"]
+    client = Client(account_sid, auth_token)
+
+
+    message = client.messages \
+        .create(
+                body=message,
+                from_='+16264273568',
+                to=phone
+            )
+
+    # print(message.sid)
+    return True
