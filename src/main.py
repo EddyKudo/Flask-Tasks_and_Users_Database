@@ -145,6 +145,7 @@ def delete_user(current_user, public_id):
     db.session.commit()
 
     return jsonify({"message" : "The user has been Deleted forever!"})
+    
 @app.route("/login")
 def login():
     
