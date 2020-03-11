@@ -124,6 +124,7 @@ def promote_user(current_user, public_id):
         return jsonify({"message" : "Cannot perform that function!"})
 
     user = User.query.filter_by(public_id=public_id).first()
+    
     if not user:
         return jsonify({"message" : "No user found!"})
     user.admin = True
@@ -145,7 +146,7 @@ def delete_user(current_user, public_id):
     db.session.commit()
 
     return jsonify({"message" : "The user has been Deleted forever!"})
-    
+
 @app.route("/login")
 def login():
     
