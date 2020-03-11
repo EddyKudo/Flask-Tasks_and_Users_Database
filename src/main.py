@@ -55,7 +55,7 @@ def get_sitemap():
     return generate_sitemap(app)
 
 @app.route("/user", methods=["GET"])
-@token_required
+# @token_required
 def get_all_users(current_user):
 
     if not current_user.admin:
